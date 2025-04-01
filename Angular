@@ -1,0 +1,111 @@
+// Gerar o projeto e instalar dependências
+Execute:
+
+ng new barbearia-app
+cd barbearia-app
+ng add @angular/material
+
+//Criar componentes e serviços
+
+ng generate component cliente
+ng generate component servico
+ng generate component agendamento
+ng generate service cliente
+ng generate service servico
+ng generate service agendamento
+
+//Serviço Angular para consumir API (cliente.service.ts)
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Cliente } from './cliente';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ClienteService {
+  private apiUrl = 'http://localhost:8080/clientes';
+
+  constructor(private http: HttpClient) {}
+
+  listarClientes(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(this.apiUrl);
+  }
+
+  criarCliente(cliente: Cliente): Observable<Cliente> {
+    return this.http.post<Cliente>(this.apiUrl, cliente);
+  }
+}
+
+//Modelo (cliente.ts)
+
+export interface Cliente {
+  id?: number;
+  nome: string;
+  telefone: string;
+}
+
+//Componente Angular (cliente.component.ts)
+
+import { Component, OnInit } from '@angular/core';
+import { ClienteService } from '../cliente.service';
+import { Cliente } from '../cliente';
+
+@Component({
+  selector: 'app-cliente',
+  templateUrl: './cliente.component.html',
+  styleUrls: ['./cliente.component.css']
+})
+export class ClienteComponent implements OnInit {
+  clientes: Cliente[] = [];
+  novoCliente: Cliente = { nome: '', telefone: '' };
+
+  constructor(private clienteService: ClienteService) {}
+
+  ngOnInit(): void {
+    this.carregarClientes();
+  }
+
+  carregarClientes(): void {
+    this.clienteService.listarClientes().subscribe(clientes => {
+      this.clientes = clientes;
+    });
+  }
+
+  adicionarCliente(): void {
+    this.clienteService.criarCliente(this.novoCliente).subscribe(() => {
+      this.carregarClientes();
+      this.novoCliente = { nome: '', telefone: '' };
+    });
+  }
+}
+
+//Template HTML (cliente.component.html)
+
+<h1>Clientes</h1>
+<ul>
+  <li *ngFor="let cliente of clientes">
+    {{ cliente.nome }} - {{ cliente.telefone }}
+  </li>
+</ul>
+
+<h2>Adicionar Cliente</h2>
+<form (ngSubmit)="adicionarCliente()">
+  <label>Nome:
+    <input [(ngModel)]="novoCliente.nome" name="nome">
+  </label>
+  <label>Telefone:
+    <input [(ngModel)]="novoCliente.telefone" name="telefone">
+  </label>
+  <button type="submit">Adicionar</button>
+</form>
+
+//Teste e Deploy
+/*
+Inicie o backend com Spring Boot.
+
+Inicie o frontend Angular com ng serve.
+
+Acesse http://localhost:4200 para usar o aplicativo.
+*/
